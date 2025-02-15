@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werehouse_inventory/page/first_screen.dart';
-import 'package:werehouse_inventory/screeen/user_stuff/user_has_borrow.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
 class MiddlePage extends StatefulWidget {
@@ -22,10 +21,23 @@ class _MiddlePageState extends State<MiddlePage> {
         builder: (context, snapshot) {
           print("${snapshot.hasData} data middle");
           if (snapshot.hasData) {
-            return UserHasBorrows();
+            return Test();
           }
           return FirstScreen();
         },
+      ),
+    );
+  }
+}
+
+class Test extends StatelessWidget {
+  const Test({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Text('TEST PAGE'),
       ),
     );
   }

@@ -57,58 +57,6 @@ class _MiddleScreenState extends State<FirstScreen> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: Stack(
-          children: [
-            ListView(
-              children: [
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  duration: const Duration(milliseconds: 5),
-                  child: Text(
-                    "Menu ",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                /*
-                    must add consumer so if user access availeble data so data automatic request to ws               
-                */
-                Consumer<WebsocketHelper>(
-                  builder: (contex, wsHelper, child) {
-                    return ListTile(
-                      leading: Icon(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        Icons.adjust_sharp,
-                      ),
-                      title: Text(
-                        "available item",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                      onTap: () {
-                        wsHelper.getAllKeyCategoryOnce();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ListCategoryUser(),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 680) {
