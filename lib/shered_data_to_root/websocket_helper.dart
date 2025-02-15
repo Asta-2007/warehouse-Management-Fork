@@ -7,7 +7,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class WebsocketHelper with ChangeNotifier {
   WebsocketHelper(this.channel) {
     connect();
-    grantedForReturnItem();
   }
 
   Stream? broadCastStream;
@@ -126,86 +125,6 @@ class WebsocketHelper with ChangeNotifier {
       isConnected = false;
       reconnet();
       notifyListeners();
-    }
-  }
-
-  //sent Frequent Request
-  void getDataBorrow() {
-    channel?.sink.add(json.encode({"endpoint": "getDataBorrow"}));
-  }
-
-  //sent once Request
-  void getDataBorrowOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataBorrowOnce"}));
-    notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataCategoryUser() {
-    channel?.sink.add(json.encode({"endpoint": "getDataCollectionAvaileble"}));
-  }
-
-  //sent once Request
-  void getDataCategoryUserOnce() {
-    channel?.sink
-        .add(json.encode({"endpoint": "getDataCollectionAvailebleOnce"}));
-    notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataAllCollection() {
-    channel?.sink.add(json.encode({"endpoint": "getDataAllCollection"}));
-  }
-
-  //sent once Request
-  void getDataAllCollectionOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataAllCollectionOnce"}));
-    notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataPending() {
-    channel?.sink.add(json.encode({"endpoint": "getDataPending"}));
-  }
-
-  //sent once Request
-  void getDataPendingOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataPendingOnce"}));
-    notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getAllKeyCategory() {
-    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategory"}));
-  }
-
-  //sent once Request
-  void getAllKeyCategoryOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getAllKeyCategoryOnce"}));
-    notifyListeners();
-  }
-
-  //sent Frequent Request
-  void getDataGranted() {
-    channel?.sink.add(json.encode({"endpoint": "getDataGranted"}));
-  }
-
-  //sent once Request
-  void getDataGrantedOnce() {
-    channel?.sink.add(json.encode({"endpoint": "getDataGrantedOnce"}));
-    notifyListeners();
-  }
-
-  void grantedForReturnItem() async {
-    await for (var data in streamControllerAll.stream) {
-      if (data['endpoint'] == "GRANTED") {
-        if (data.containsKey('message')) {
-          final SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.remove('hasBorrow');
-          notifyListeners();
-          return;
-        }
-      }
     }
   }
 
