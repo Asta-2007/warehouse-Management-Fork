@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -18,6 +19,7 @@ class WebsocketHelper with ChangeNotifier {
   final verifikasiHasLogin = StreamController<Map>.broadcast();
   final checkUserHasBorrows = StreamController<String>.broadcast();
   final streamControllerAll = StreamController<Map>.broadcast();
+  final storage = FlutterSecureStorage();
 
   @override
   void dispose() {
@@ -54,7 +56,7 @@ class WebsocketHelper with ChangeNotifier {
         _reconnectTimer = Timer(
           _reconnectDelay,
           () {
-            print("attempting to reconnect .....");
+            debugPrint("attempting to reconnect .....");
             connect();
             notifyListeners();
           },
@@ -65,57 +67,61 @@ class WebsocketHelper with ChangeNotifier {
         _reconnectTimer = Timer(
           _reconnectDelay,
           () {
-            print("attempting to reconnect .....");
+            debugPrint("attempting to reconnect .....");
             connect();
             notifyListeners();
           },
         );
       }
-      print(e);
+      debugPrint("error reconnect $e");
     }
+  }
+
+  void processConnectionServer(Stream? connections) {
+    connections?.listen(
+      (message) async {
+        // process code in another thread
+        final streamData = await compute(jsonDecodes, message);
+
+        switch (streamData['endpoint']) {
+          case "VERIFIKASI":
+            print(streamData);
+            notifyListeners();
+            verifikasiHasLogin.sink.add(streamData);
+            break;
+
+          case "CHECKUSER":
+            checkUserHasBorrows.sink.add(streamData['message']);
+            notifyListeners();
+
+            break;
+          default:
+            notifyListeners();
+            streamControllerAll.sink.add(streamData);
+            break;
+        }
+      },
+      onDone: () {
+        debugPrint('connection close ');
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
+      onError: (e) {
+        debugPrint("$e  connect");
+
+        isConnected = false;
+        reconnet();
+        notifyListeners();
+      },
+    );
   }
 
   void connect() async {
     try {
       broadCastStream = channel?.stream.asBroadcastStream();
-      broadCastStream?.listen(
-        (message) async {
-          // process code in another thread
-          final streamData = await compute(jsonDecodes, message);
-
-          switch (streamData['endpoint']) {
-            case "VERIFIKASI":
-              notifyListeners();
-              verifikasiHasLogin.sink.add(streamData);
-              break;
-
-            case "CHECKUSER":
-              checkUserHasBorrows.sink.add(streamData['message']);
-              notifyListeners();
-              print(streamData);
-              break;
-            default:
-              notifyListeners();
-              streamControllerAll.sink.add(streamData);
-              break;
-          }
-        },
-        onDone: () {
-          print('connection close ');
-
-          isConnected = false;
-          reconnet();
-          notifyListeners();
-        },
-        onError: (e) {
-          print("$e  co");
-
-          isConnected = false;
-          reconnet();
-          notifyListeners();
-        },
-      );
-
+      await compute(processConnectionServer, broadCastStream);
       isConnected = true;
       notifyListeners();
     } catch (e, s) {
@@ -137,7 +143,6 @@ class WebsocketHelper with ChangeNotifier {
           now.subtract(Duration(seconds: 2)).toIso8601String(),
     );
     if (now.difference(lastRequest).inSeconds >= 2) {
-      print("tokenUser $getToken");
       if (getToken != null) {
         channel?.sink.add(
           json.encode(
@@ -158,7 +163,6 @@ class WebsocketHelper with ChangeNotifier {
   void userHasBorrowsOnce() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final getToken = prefs.getString('hasBorrow');
-    print("$getToken user name");
 
     channel?.sink.add(json.encode(
       {
@@ -168,17 +172,6 @@ class WebsocketHelper with ChangeNotifier {
         }
       },
     ));
-  }
-
-  void testDeleteUser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('hasBorrow');
-    return;
-  }
-
-  Future<Map> message() async {
-    await Future.delayed(Duration(seconds: 10));
-    return {"message": "respone"};
   }
 
   void sendMessage(Map<String, dynamic> message) {
@@ -202,44 +195,6 @@ class WebsocketHelper with ChangeNotifier {
     );
   }
 
-  Stream<String> verifikasi() async* {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final getToken = prefs.getString('token');
-
-    try {
-      DateTime now = DateTime.now();
-      DateTime lastRequest = DateTime.parse(
-        prefs.getString('lastRequest') ??
-            now.subtract(Duration(minutes: 10)).toIso8601String(),
-      );
-
-      // debugPrint("$getToken token wsHelper");
-      // debugPrint("${prefs.getString('lastRequest')} exp wsHelper");
-
-      if (now.difference(lastRequest).inMinutes >= 10) {
-        if (getToken != null) {
-          channel?.sink.add(json.encode(
-            {
-              "endpoint": "verifikasi",
-              "data": {
-                "token": getToken,
-              }
-            },
-          ));
-        }
-        prefs.setString('lastRequest', now.toIso8601String());
-      }
-
-      await for (final status in streamControllerAll.stream) {
-        if (status['endpoint'] == "VERIFIKASI") {
-          yield status['status'];
-        }
-      }
-    } catch (e) {
-      debugPrint("$e error in verifikasi");
-    }
-  }
-
   Stream<Map> responseLogin() async* {
     Map data = {};
 
@@ -260,6 +215,56 @@ class WebsocketHelper with ChangeNotifier {
         data.addAll(map);
         notifyListeners();
         yield data;
+      }
+    }
+  }
+
+  Stream<String?> verifikasiLogin() async* {
+    final token = await storage.read(key: 'token');
+    await Future.delayed(Duration(microseconds: 1));
+    yield token;
+  }
+
+  void chekVerifikasi() async {
+    try {
+      final getToken = await storage.read(key: 'token');
+
+      if (getToken != null) {
+        Timer.periodic(
+          Duration(seconds: 10),
+          (_) {
+            channel?.sink.add(json.encode(
+              {
+                "endpoint": "verifikasi",
+                "data": {
+                  "token": getToken,
+                }
+              },
+            ));
+
+            print("token get $getToken");
+            return;
+          },
+        );
+
+        // To cancel the subscription later:
+      }
+    } catch (e) {
+      debugPrint("$e error in verifikasi");
+    }
+  }
+
+  void removeTokenIfExp() async {
+    await for (final status in verifikasiHasLogin.stream) {
+      int count = 1;
+      if (status['status'] == "NOT-VERIFIKASI") {
+        notifyListeners();
+        final getToken = await storage.read(key: 'token');
+        await storage.delete(key: 'token');
+        print("affter delete $getToken");
+        count++;
+        print("count $count");
+        return;
       }
     }
   }
