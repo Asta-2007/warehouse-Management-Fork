@@ -19,7 +19,7 @@ class _MiddlePageState extends State<MiddlePage> {
       body: StreamBuilder(
         stream: secondaryWs.checkUserHasBorrows.stream,
         builder: (context, snapshot) {
-          print("${snapshot.hasData} data middle");
+          // print("${snapshot.hasData} data middle");
           if (snapshot.hasData) {
             return Test();
           }
@@ -31,13 +31,18 @@ class _MiddlePageState extends State<MiddlePage> {
 }
 
 class Test extends StatelessWidget {
-  const Test({super.key});
-
+  Test({super.key});
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text('TEST PAGE'),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [TextFormField()],
+          ),
+        ),
       ),
     );
   }
