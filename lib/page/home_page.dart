@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:werehouse_inventory/page/first_screen.dart';
+import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
-class HomePage extends StatelessWidget {
-  HomePage({
-    super.key,
-  });
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePagesState();
+}
+
+class _HomePagesState extends State<HomePage> {
   final GlobalKey<ScaffoldState> drawer = GlobalKey<ScaffoldState>();
-
-  Future<String?> nameAdmin() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? name = prefs.getString("adminName");
-
-    return name;
-  }
-
+  final storage = FlutterSecureStorage();
   Future<dynamic> detailAdmin(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? name = prefs.getString("adminName");
+    final String? name = await storage.read(key: "adminName");
 
     if (!context.mounted) {
       return;
     }
     return showDialog(
       context: context,
+      barrierColor: Colors.transparent,
       builder: (context) {
         return Stack(
           children: [
@@ -62,6 +61,7 @@ class HomePage extends StatelessWidget {
   Future<dynamic> messages(BuildContext context, String response) {
     return showDialog(
       context: context,
+      barrierColor: Colors.transparent,
       barrierDismissible: false,
       builder: (context) => AlertDialog.adaptive(
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -99,6 +99,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryWs = Provider.of<WebsocketHelper>(context, listen: true);
+    secondaryWs.chekVerifikasi();
+    secondaryWs.removeTokenIfExp();
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -130,9 +133,60 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: Stack(
+          children: [
+            ListView(
+              children: [
+                DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  duration: const Duration(milliseconds: 5),
+                  child: Text(
+                    "Menu ",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              bottom: 15,
+              right: 15,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                ),
+                onPressed: () async {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FirstScreen(),
+                    ),
+                    (route) => false,
+                  );
+
+                  await storage.delete(key: 'token');
+                },
+                child: Text(
+                  'logout',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 680) {
+            print(constraints.maxWidth);
             return Stack(
               children: [
                 Row(
@@ -161,7 +215,7 @@ class HomePage extends StatelessWidget {
                   right: constraints.maxWidth * 0.1,
                   child: Container(
                     width: constraints.maxWidth * 0.65,
-                    height: constraints.maxHeight * 0.66,
+                    height: constraints.maxWidth * 0.5,
                     color: Theme.of(context).colorScheme.secondary,
                   ),
                 )
