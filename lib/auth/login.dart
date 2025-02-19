@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werehouse_inventory/page/home_page.dart';
 import 'package:werehouse_inventory/shered_data_to_root/websocket_helper.dart';
 
@@ -75,13 +75,12 @@ class _LoginState extends State<Login> {
           debugPrint("$warning waring");
           return;
         } else if (data.containsKey('message')) {
-          final prefs = await SharedPreferences.getInstance();
-          final token = data['message'];
-          await prefs.setString('token', token);
-          await prefs.setString("adminName", data['adminName']);
+          final storage = FlutterSecureStorage();
+          await storage.write(key: "token", value: data['message']);
+          await storage.write(key: "adminName", value: data['adminName']);
 
           if (!context.mounted) return;
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => HomePage(),
@@ -97,6 +96,7 @@ class _LoginState extends State<Login> {
   Future<dynamic> alertDialog(BuildContext context, warning) {
     return showDialog(
       context: context,
+      barrierColor: Colors.transparent,
       builder: (context) => AlertDialog.adaptive(
         backgroundColor: Theme.of(context).colorScheme.error,
         title: Text(
@@ -120,12 +120,6 @@ class _LoginState extends State<Login> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              Future.delayed(
-                Duration(seconds: 1),
-                () {
-                  _fromKey.currentState!.reset();
-                },
-              );
             },
             child: Text(
               "Yes",
@@ -443,8 +437,8 @@ class _LoginState extends State<Login> {
               if (isLoding)
                 Container(
                   margin: EdgeInsets.only(
-                    right: constraints.maxWidth * 0.05,
-                    left: constraints.maxWidth * 0.05,
+                    right: constraints.maxWidth * 0.12,
+                    left: constraints.maxWidth * 0.12,
                   ),
                   child: ElevatedButton(
                     onPressed: () {},
