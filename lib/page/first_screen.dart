@@ -74,11 +74,11 @@ class _MiddleScreenState extends State<FirstScreen> {
                 ),
                 Positioned(
                   left: constraints.maxWidth * 0.1,
-                  top: constraints.maxWidth * 0.15,
+                  top: constraints.maxWidth * 0.2,
                   right: constraints.maxWidth * 0.1,
                   child: Container(
                     width: constraints.maxWidth * 0.65,
-                    height: constraints.maxHeight * 0.66,
+                    height: constraints.maxHeight * 0.5,
                     color: Theme.of(context).colorScheme.secondary,
                   ),
                 )
