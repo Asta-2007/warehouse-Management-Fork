@@ -273,7 +273,7 @@ class CardGranted extends StatelessWidget {
             context,
             true,
             message['message'],
-            Theme.of(context).colorScheme.onSurface,
+            Theme.of(context).colorScheme.surface,
           );
           return;
         } else {

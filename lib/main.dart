@@ -11,7 +11,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<WebsocketHelper>(
           create: (_) => WebsocketHelper(
-            WebSocketChannel.connect(Uri.parse('ws://127.0.0.1:8080/ws')),
+            WebSocketChannel.connect(Uri.parse('ws://dart_server:8080')),
           ),
         ),
         ChangeNotifierProvider(

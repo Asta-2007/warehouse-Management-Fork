@@ -107,7 +107,7 @@ class _AddItemState extends State<AddItem> {
             "category": valueDropDown,
             "name": name,
             "label": label,
-            "image": image,
+            "image": image ?? [],
           },
         },
       );

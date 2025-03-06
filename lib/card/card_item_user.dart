@@ -78,7 +78,7 @@ class CardItemUser extends StatelessWidget {
             context,
             true,
             status['message'],
-            Theme.of(context).colorScheme.onSecondary,
+            Theme.of(context).colorScheme.surface,
           );
 
           return;

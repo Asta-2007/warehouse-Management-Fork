@@ -213,7 +213,7 @@ class CardBorrow extends StatelessWidget {
                         }
                       },
                     );
-                    deletedUserGratend(context, wsHelper);
+                    responHasForceReturnItem(context, wsHelper);
                   },
                 );
               },
@@ -224,7 +224,7 @@ class CardBorrow extends StatelessWidget {
     );
   }
 
-  void deletedUserGratend(
+  void responHasForceReturnItem(
       BuildContext context, WebsocketHelper wsHelper) async {
     await for (final message in wsHelper.streamControllerAll.stream) {
       if (message['endpoint'] == "WAITPERMISION") {
